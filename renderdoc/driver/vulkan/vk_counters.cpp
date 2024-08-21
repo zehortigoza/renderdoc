@@ -593,13 +593,20 @@ struct VulkanKHRCallback : public VulkanActionCallback
     m_pDriver->SetActionCB(this);
   }
   ~VulkanKHRCallback() { m_pDriver->SetActionCB(NULL); }
+
   void PreDraw(uint32_t eid, ActionFlags flags, VkCommandBuffer cmd) override
   {
+    if (!m_pDriver->IsQuerySupportedInCommandBuffer())
+      return;
+
     ObjDisp(cmd)->CmdBeginQuery(Unwrap(cmd), m_QueryPool, (uint32_t)m_Results.size(), 0);
   }
 
   bool PostDraw(uint32_t eid, ActionFlags flags, VkCommandBuffer cmd) override
   {
+    if (!m_pDriver->IsQuerySupportedInCommandBuffer())
+      return false;
+
     ObjDisp(cmd)->CmdEndQuery(Unwrap(cmd), m_QueryPool, (uint32_t)m_Results.size());
     m_Results.push_back(eid);
     return false;
@@ -664,8 +671,9 @@ rdcarray<CounterResult> VulkanReplay::FetchCountersKHR(const rdcarray<GPUCounter
   for(const GPUCounter &c : counters)
     counterIndices.push_back(FromKHRCounter(c));
 
+  uint32_t queueFamilyIndex = 0;
   VkQueryPoolPerformanceCreateInfoKHR perfCreateInfo = {
-      VK_STRUCTURE_TYPE_QUERY_POOL_PERFORMANCE_CREATE_INFO_KHR, NULL, 0,
+      VK_STRUCTURE_TYPE_QUERY_POOL_PERFORMANCE_CREATE_INFO_KHR, NULL, queueFamilyIndex,
       (uint32_t)counterIndices.size(), &counterIndices[0]};
   uint32_t passCount = 0;
   ObjDisp(m_pDriver->GetInstance())
@@ -690,6 +698,8 @@ rdcarray<CounterResult> VulkanReplay::FetchCountersKHR(const rdcarray<GPUCounter
   VkQueryPool queryPool;
   vkr = ObjDisp(dev)->CreateQueryPool(Unwrap(dev), &queryPoolCreateInfo, NULL, &queryPool);
   CheckVkResult(vkr);
+
+  m_pDriver->m_QueryPoolQueueFamilyIdx = queueFamilyIndex;
 
   // Reset query pool
   VkCommandBuffer cmd = m_pDriver->GetNextCmd();

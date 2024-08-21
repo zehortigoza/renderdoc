@@ -345,9 +345,10 @@ void WrappedVulkan::SubmitCmds(VkSemaphore *unwrappedWaitSemaphores,
   for(size_t i = 0; i < cmds.size(); i++)
     cmds[i] = Unwrap(cmds[i]);
 
+  const void *submitChain = IsQuerySupportedInCommandBuffer() ? m_SubmitChain : NULL;
   VkSubmitInfo submitInfo = {
       VK_STRUCTURE_TYPE_SUBMIT_INFO,
-      m_SubmitChain,
+      submitChain,
       waitSemaphoreCount,
       unwrappedWaitSemaphores,
       waitStageMask,
@@ -485,9 +486,10 @@ void WrappedVulkan::SubmitAndFlushExtQueue(uint32_t queueFamilyIdx)
 
   VkCommandBuffer buf = Unwrap(m_ExternalQueues[queueFamilyIdx].ring[0].acquire);
 
+  const void *submitChain = IsQuerySupportedInCommandBuffer() ? m_SubmitChain : NULL;
   VkSubmitInfo submitInfo = {
       VK_STRUCTURE_TYPE_SUBMIT_INFO,
-      m_SubmitChain,
+      submitChain,
       0,
       NULL,
       NULL,    // wait semaphores
@@ -3417,9 +3419,10 @@ RDResult WrappedVulkan::ContextReplayLog(CaptureState readType, uint32_t startEv
   // submit the indirect preparation command buffer, if we need to
   if(m_IndirectDraw)
   {
+    const void *submitChain = IsQuerySupportedInCommandBuffer() ? m_SubmitChain : NULL;
     VkSubmitInfo submitInfo = {
         VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        m_SubmitChain,
+        submitChain,
         0,
         NULL,
         NULL,    // wait semaphores
@@ -5591,7 +5594,8 @@ uint32_t WrappedVulkan::FindCommandQueueFamily(ResourceId cmdId)
   auto it = m_commandQueueFamilies.find(cmdId);
   if(it == m_commandQueueFamilies.end())
   {
-    RDCERR("Unknown queue family for %s", ToStr(cmdId).c_str());
+    //RDCERR("Unknown queue family for %s", ToStr(cmdId).c_str());
+    printf("Unknown queue family for %s", ToStr(cmdId).c_str());
     return m_QueueFamilyIdx;
   }
   return it->second;
@@ -5811,6 +5815,13 @@ void WrappedVulkan::ReplayDraw(VkCommandBuffer cmd, const ActionDescription &act
 
     VkMarkerRegion::End(cmd);
   }
+}
+
+bool WrappedVulkan::IsQuerySupportedInCommandBuffer()
+{
+  uint32_t queueFamilyIdx = FindCommandQueueFamily(m_LastCmdBufferID);
+
+  return m_QueryPoolQueueFamilyIdx == queueFamilyIdx;
 }
 
 #if ENABLED(ENABLE_UNIT_TESTS)

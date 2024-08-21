@@ -861,6 +861,9 @@ private:
   // above map
   rdcarray<rdcpair<VkCommandPool, VkCommandBuffer>> m_RerecordCmdList;
 
+  // the QueueFamilyIdx set during vkCreateQueryPool()
+  uint32_t m_QueryPoolQueueFamilyIdx;
+
   // There is only a state while currently partially replaying, it's
   // undefined/empty otherwise.
   // All IDs are original IDs, not live.
@@ -1223,6 +1226,7 @@ public:
   void Shutdown();
   void ReplayLog(uint32_t startEventID, uint32_t endEventID, ReplayLogType replayType);
   void ReplayDraw(VkCommandBuffer cmd, const ActionDescription &action);
+  bool IsQuerySupportedInCommandBuffer();
   RDResult ReadLogInitialisation(RDCFile *rdc, bool storeStructuredBuffers);
 
   SDFile *GetStructuredFile() { return m_StructuredFile; }
