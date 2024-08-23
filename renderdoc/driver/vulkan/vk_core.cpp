@@ -5595,7 +5595,7 @@ uint32_t WrappedVulkan::FindCommandQueueFamily(ResourceId cmdId)
   if(it == m_commandQueueFamilies.end())
   {
     //RDCERR("Unknown queue family for %s", ToStr(cmdId).c_str());
-    printf("Unknown queue family for %s", ToStr(cmdId).c_str());
+    printf("Unknown queue family for %s\n", ToStr(cmdId).c_str());
     return m_QueueFamilyIdx;
   }
   return it->second;
