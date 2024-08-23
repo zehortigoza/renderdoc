@@ -5820,7 +5820,7 @@ void WrappedVulkan::ReplayDraw(VkCommandBuffer cmd, const ActionDescription &act
 bool WrappedVulkan::IsQuerySupportedInCommandBuffer()
 {
   uint32_t queueFamilyIdx = FindCommandQueueFamily(m_LastCmdBufferID);
-
+  printf("IsQuerySupportedInCommandBuffer() queueFamilyIdx=%i matches=%i\n", queueFamilyIdx, m_QueryPoolQueueFamilyIdx == queueFamilyIdx);
   return m_QueryPoolQueueFamilyIdx == queueFamilyIdx;
 }
 
