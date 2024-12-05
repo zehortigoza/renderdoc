@@ -596,16 +596,20 @@ struct VulkanKHRCallback : public VulkanActionCallback
 
   void PreDraw(uint32_t eid, ActionFlags flags, VkCommandBuffer cmd) override
   {
-    if (!m_pDriver->IsQuerySupportedInCommandBuffer())
+    if (!m_pDriver->IsQuerySupportedInCommandBuffer()) {
+      printf("CmdBeginQuery skipped\n");
       return;
+    }
 
     ObjDisp(cmd)->CmdBeginQuery(Unwrap(cmd), m_QueryPool, (uint32_t)m_Results.size(), 0);
   }
 
   bool PostDraw(uint32_t eid, ActionFlags flags, VkCommandBuffer cmd) override
   {
-    if (!m_pDriver->IsQuerySupportedInCommandBuffer())
+    if (!m_pDriver->IsQuerySupportedInCommandBuffer()) {
+      printf("CmdEndQuery skipped\n");
       return false;
+    }
 
     ObjDisp(cmd)->CmdEndQuery(Unwrap(cmd), m_QueryPool, (uint32_t)m_Results.size());
     m_Results.push_back(eid);
